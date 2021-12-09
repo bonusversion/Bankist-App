@@ -107,6 +107,13 @@ const formatMovementDate = function (date, locale) {
   return Intl.DateTimeFormat(locale).format(date);
 };
 
+const formatCur = function (value, locale, currency) {
+  return Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency,
+  }).format(Math.abs(value));
+};
+
 const displayMovement = function (acc, sort = false) {
   containerMovements.innerHTML = '';
   const movs = sort
@@ -123,7 +130,11 @@ const displayMovement = function (acc, sort = false) {
       i + 1
     } ${type}</div>
        <div class="movements__date">${displayDate}</div>
-        <div class="movements__value">${Math.abs(movement).toFixed(2)}€</div>
+        <div class="movements__value">${formatCur(
+          movement,
+          acc.locale,
+          acc.currency
+        )}</div>
       </div>
 `;
     containerMovements.insertAdjacentHTML('afterbegin', html);
@@ -132,26 +143,26 @@ const displayMovement = function (acc, sort = false) {
 
 const calcDisplayBalance = function (acc) {
   acc.balance = acc.movements.reduce((acc, cur) => acc + cur, 0);
-  labelBalance.textContent = `${acc.balance.toFixed(2)}€`;
+  labelBalance.textContent = formatCur(acc.balance, acc.locale, acc.currency);
 };
 
 const calcDisplaySummary = function (acc) {
   const income = acc.movements
     .filter(mov => mov > 0)
     .reduce((acc, mov) => acc + mov);
-  labelSumIn.textContent = `${income.toFixed(2)}€`;
+  labelSumIn.textContent = formatCur(income, acc.locale, acc.currency);
 
   const out = acc.movements
     .filter(mov => mov < 0)
     .reduce((acc, mov) => acc + mov, 0);
-  labelSumOut.textContent = `${Math.abs(out).toFixed(2)}€`;
+  labelSumOut.textContent = formatCur(out, acc.locale, acc.currency);
 
   const interests = acc.movements
     .filter(mov => mov > 0)
     .map(deposit => (deposit * acc.interestRate) / 100)
     .filter(int => int >= 1)
     .reduce((acc, int) => acc + int, 0);
-  labelSumInterest.textContent = `${interests.toFixed(2)}€`;
+  labelSumInterest.textContent = formatCur(interests, acc.locale, acc.currency);
 };
 
 const createUsernames = function (accs) {
