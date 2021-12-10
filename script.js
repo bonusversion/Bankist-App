@@ -95,7 +95,7 @@ const formatMovementDate = function (date, locale) {
     Math.round(Math.abs((date2 - date1) / (1000 * 60 * 60 * 24)));
 
   const daysPassed = calcDaysPassed(new Date(), date);
-  console.log(daysPassed);
+  // console.log(daysPassed);
 
   if (daysPassed === 0) return 'Today';
   if (daysPassed === 1) return 'Yestoday';
@@ -187,8 +187,33 @@ const updateUI = function () {
   calcDisplayBalance(currentAccount);
 };
 
+const startLogOutTimer = function () {
+  const tick = () => {
+    let min = String(Math.trunc(time / 60)).padStart(2, 0);
+    let sec = String(time % 60).padStart(2, 0);
+
+    // In each call, print the remaining time to UI
+    labelTimer.textContent = `${min}:${sec}`;
+
+    // When 0 seconds, stop timer and log out user
+    if (time === 0) {
+      clearInterval(timer);
+      labelWelcome.textContent = 'Log in to get Started';
+      containerApp.style.opacity = 0;
+    }
+    // Decrease 1s
+    time--;
+  };
+  // Set time to 5 minutes
+  let time = 120;
+  // Call the timer every second
+  tick();
+  const timer = setInterval(tick, 1000);
+  return timer;
+};
+
 // Event Handler
-let currentAccount;
+let currentAccount, timer;
 
 btnLogin.addEventListener('click', function (e) {
   // Prevent form from submitting
@@ -232,6 +257,10 @@ btnLogin.addEventListener('click', function (e) {
     // Clear input fields
     inputLoginUsername.value = inputLoginPin.value = '';
     inputLoginUsername.blur();
+
+    if (timer) clearInterval(timer);
+
+    timer = startLogOutTimer();
     // Update UI
     updateUI(currentAccount);
   }
@@ -259,6 +288,10 @@ btnTransfer.addEventListener('click', function (e) {
 
     // Update UI
     updateUI(currentAccount);
+
+    // Reset Timer
+    clearInterval(timer);
+    timer = startLogOutTimer();
   }
 });
 
@@ -266,14 +299,24 @@ btnLoan.addEventListener('click', function (e) {
   e.preventDefault();
   const amount = Math.ceil(+inputLoanAmount.value);
   if (amount > 0 && currentAccount.movements.some(mov => mov >= amount * 0.1)) {
-    // Add movement
-    currentAccount.movements.push(amount);
+    // simulating the bank takes some time to approval the loan...
+    setTimeout(() => {
+      // Add movement
+      currentAccount.movements.push(amount);
 
-    // Add loan date
-    currentAccount.movementsDates.push(new Date().toISOString());
+      // Add loan date
+      currentAccount.movementsDates.push(new Date().toISOString());
 
-    // Update UI
-    updateUI();
+      // Update UI
+      updateUI();
+
+      // Reset Timer
+      if (timer) {
+        console.log('##');
+        clearInterval(timer);
+        timer = startLogOutTimer();
+      }
+    }, 2500);
   }
   inputLoanAmount.value = '';
 });
